@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>XD Auto Inventory</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+/* Layout: US used-truck dealer inventory page — utility bar, brand header with nav, category tiles + search,
+   filter sidebar beside a card grid (4:3 photo slot holding trim + miles), how-it-works strip, window-sticker detail. */
+:root{
+  --paper:#f3f4f2; --panel:#ffffff; --ink:#15202b; --steel:#5e6976; --rule:#d9dde0; --rule-strong:#bcc3c9;
+  --accent:#b8321f; --accent-ink:#ffffff; --navy:#16304d; --navy-ink:#ffffff; --deal:#23683f; --deal-soft:#e3f0e7;
+  --slot-a:#1f2c3a; --slot-b:#2c3e51; --slot-ink:#f1f3f5; --slot-dim:#a9b5c1;
+  --display:"Barlow Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0e1318; --panel:#161d24; --ink:#e7ebee; --steel:#98a3ae; --rule:#26303a; --rule-strong:#384451;
+  --accent:#e0644f; --accent-ink:#111418; --navy:#22436a; --navy-ink:#f1f4f7; --deal:#6fcf97; --deal-soft:#15301f;
+  --slot-a:#0b1117; --slot-b:#1a2633; --slot-ink:#eef1f4; --slot-dim:#8d9aa7; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0e1318; --panel:#161d24; --ink:#e7ebee; --steel:#98a3ae; --rule:#26303a; --rule-strong:#384451;
+  --accent:#e0644f; --accent-ink:#111418; --navy:#22436a; --navy-ink:#f1f4f7; --deal:#6fcf97; --deal-soft:#15301f;
+  --slot-a:#0b1117; --slot-b:#1a2633; --slot-ink:#eef1f4; --slot-dim:#8d9aa7; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 var(--body)}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:20px}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.util{background:var(--ink);color:var(--paper);font-size:12.5px}
+.util .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 18px;padding-block:7px}
+.util span{opacity:.85}
+header.brand{background:var(--panel);border-bottom:1px solid var(--rule)}
+header.brand .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 28px;padding-block:14px}
+.logo{display:flex;align-items:baseline;gap:10px}
+.logo b{font:700 30px/1 var(--display);letter-spacing:.04em;text-transform:uppercase}
+.logo small{font:600 13px/1 var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--steel)}
+nav{display:flex;flex-wrap:wrap;gap:4px 22px;font:600 15px/1 var(--display);letter-spacing:.08em;text-transform:uppercase}
+nav a{text-decoration:none;color:var(--ink);padding-block:6px;border-bottom:2px solid transparent}
+nav a[aria-current="page"]{border-color:var(--accent)}
+.call{display:flex;align-items:center;gap:10px}
+.call .btn{white-space:nowrap}
+
+.btn{display:inline-block;border:0;border-radius:3px;background:var(--accent);color:var(--accent-ink);padding:9px 16px;font:600 15px/1.2 var(--display);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;text-decoration:none}
+.btn.navy{background:var(--navy);color:var(--navy-ink)}
+.btn.line{background:transparent;color:var(--ink);border:1px solid var(--rule-strong)}
+
+.cats{background:var(--navy);color:var(--navy-ink)}
+.cats .wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px 30px;align-items:center;padding-block:22px}
+.cats h1{margin:0;font:600 clamp(26px,3.4vw,38px)/1.05 var(--display);text-transform:uppercase;text-wrap:balance}
+.cats p{margin:8px 0 0;opacity:.85;max-width:60ch;font-size:14px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.06);color:var(--navy-ink);border-radius:3px;padding:10px 12px;text-align:left;cursor:pointer}
+.tile b{display:block;font:600 19px/1.1 var(--display);text-transform:uppercase;letter-spacing:.04em}
+.tile span{font-size:12px;opacity:.8}
+.tile[aria-pressed="true"]{background:var(--panel);color:var(--ink);border-color:var(--panel)}
+.search{grid-column:1/-1;display:flex;gap:8px}
+.search input{flex:1;min-width:0;border:0;border-radius:3px;padding:11px 14px;font-size:15px;background:var(--panel);color:var(--ink)}
+
+.featured{padding-block:26px 6px}
+.featured > .wrap > h2{margin:0;font:700 clamp(24px,3vw,32px)/1.05 var(--display);text-transform:uppercase;letter-spacing:.03em;text-wrap:balance}
+.featured > .wrap > p{margin:6px 0 0;color:var(--steel);font-size:14px;max-width:70ch}
+.fgrp{margin-top:22px}
+.fgrp-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 14px;border-bottom:2px solid var(--ink);padding-bottom:6px;margin-bottom:12px}
+.fgrp-h h3{margin:0;font:700 22px/1.1 var(--display);text-transform:uppercase;letter-spacing:.03em}
+.fgrp-h span{font-size:13px;color:var(--steel)}
+.fgrp-h b{font:600 13px/1 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.fgrp .grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:1000px){.fgrp .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.fgrp .grid{grid-template-columns:minmax(0,1fr)}}
+.slot .new{position:absolute;top:9px;right:10px;background:var(--accent);color:var(--accent-ink);font:700 12px/1 var(--display);letter-spacing:.12em;text-transform:uppercase;padding:4px 7px;border-radius:2px}
+.prices .ask{display:flex;justify-content:space-between;align-items:baseline}
+.prices .ask span{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.prices .ask b{font:700 22px/1 var(--display);text-transform:uppercase;letter-spacing:.04em}
+.st-price.ask{background:var(--panel)}
+.trust{background:var(--panel);border-bottom:1px solid var(--rule)}
+.trust .wrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding-block:12px}
+.trust div{font-size:13px;color:var(--steel);border-left:3px solid var(--accent);padding-left:10px;min-width:0}
+.trust b{display:block;color:var(--ink);font:600 16px/1.2 var(--display);letter-spacing:.04em;text-transform:uppercase}
+
+.inv{display:grid;grid-template-columns:250px minmax(0,1fr);gap:22px;padding-block:22px 44px}
+aside{background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:14px 16px;align-self:start;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+aside h2{margin:0 0 4px;font:600 18px/1 var(--display);text-transform:uppercase;letter-spacing:.06em}
+.fgroup{border-top:1px solid var(--rule);padding-block:12px;display:grid;gap:7px}
+.fgroup:first-of-type{border-top:0}
+.fgroup > label,.fgroup > .lbl{font-size:11.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--steel)}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer}
+.check span{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--steel)}
+aside select,aside input[type="number"]{width:100%;border:1px solid var(--rule-strong);border-radius:3px;padding:7px 8px;background:var(--panel);font-size:14px}
+.reset{background:none;border:0;color:var(--accent);font-size:13px;padding:0;cursor:pointer;justify-self:start}
+
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.bar h2{margin:0;font:600 22px/1 var(--display);text-transform:uppercase;letter-spacing:.04em}
+.bar h2 span{color:var(--steel);font-weight:500}
+.bar label{font-size:13px;color:var(--steel);display:flex;gap:8px;align-items:center}
+.bar select{border:1px solid var(--rule-strong);border-radius:3px;padding:7px 8px;background:var(--panel);font-size:14px;color:var(--ink)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:3px;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.slot{aspect-ratio:4/3;max-width:100%;background:linear-gradient(155deg,var(--slot-a),var(--slot-b));color:var(--slot-ink);position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:16px;cursor:pointer;border:0;width:100%}
+.slot .tr{font:700 clamp(30px,3.2vw,40px)/.95 var(--display);text-transform:uppercase;letter-spacing:.03em;text-wrap:balance}
+.slot .mi{margin-top:10px;font:600 19px/1 var(--display);letter-spacing:.08em;font-variant-numeric:tabular-nums;color:var(--slot-dim)}
+.slot .yr{position:absolute;top:10px;left:12px;font:600 15px/1 var(--display);letter-spacing:.06em;color:var(--slot-dim)}
+.slot .paint{position:absolute;bottom:10px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--slot-dim)}
+.slot .paint i{display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid rgba(255,255,255,.4);margin-right:6px;vertical-align:-1px}
+.cbody{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.card h3{margin:0;font:600 20px/1.12 var(--display);text-transform:uppercase;letter-spacing:.02em;text-wrap:balance}
+.facts{font-size:13px;color:var(--steel)}
+.facts .code{font-family:var(--mono);font-size:12px}
+.prices{margin-top:auto;padding-top:10px;border-top:1px solid var(--rule);display:grid;gap:2px}
+.prices .row{display:flex;justify-content:space-between;font-size:13px;color:var(--steel);font-variant-numeric:tabular-nums}
+.prices .row s{color:var(--steel)}
+.prices .feat{display:flex;justify-content:space-between;align-items:baseline}
+.prices .feat span{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.prices .feat b{font:700 28px/1 var(--display);font-variant-numeric:tabular-nums}
+.save{justify-self:end;background:var(--deal-soft);color:var(--deal);font-size:12px;font-weight:600;padding:2px 7px;border-radius:3px;font-variant-numeric:tabular-nums}
+.card .btn{margin-top:10px;width:100%;text-align:center}
+.empty{grid-column:1/-1;padding:40px 0;color:var(--steel)}
+
+.how{background:var(--panel);border-top:1px solid var(--rule)}
+.how .wrap{padding-block:28px 34px}
+.how h2{margin:0 0 14px;font:600 26px/1 var(--display);text-transform:uppercase;letter-spacing:.04em}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;counter-reset:s}
+.steps div{counter-increment:s;min-width:0}
+.steps div::before{content:counter(s);display:block;font:700 34px/1 var(--display);color:var(--accent)}
+.steps b{display:block;font:600 18px/1.2 var(--display);text-transform:uppercase;margin:6px 0 4px}
+.steps p{margin:0;color:var(--steel);font-size:14px}
+footer{background:var(--ink);color:var(--paper);font-size:13px}
+footer .wrap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;padding-block:24px 36px}
+footer h4{margin:0 0 6px;font:600 16px/1 var(--display);letter-spacing:.08em;text-transform:uppercase}
+footer p{margin:0;opacity:.8}
+
+dialog{border:0;padding:0;background:transparent;max-width:740px;width:calc(100% - 24px)}
+dialog::backdrop{background:rgba(10,14,18,.55)}
+.sticker{background:var(--panel);color:var(--ink);border:2px solid var(--ink);border-radius:2px}
+.st-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 18px;border-bottom:2px solid var(--ink)}
+.st-head h2{margin:0;font:700 28px/1.02 var(--display);text-transform:uppercase}
+.st-head .k{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--steel)}
+.x{border:1px solid var(--rule-strong);background:var(--panel);width:34px;height:34px;border-radius:3px;font-size:18px;line-height:1;cursor:pointer;flex:none}
+.st-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr)}
+.st-col{padding:14px 18px;min-width:0}
+.st-col+.st-col{border-left:1px solid var(--rule-strong)}
+.lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--steel);margin:0 0 8px;font-weight:600}
+dl.kv{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 14px;font-size:13.5px}
+dl.kv dt{color:var(--steel)}
+dl.kv dd{margin:0;overflow-wrap:anywhere}
+.opt{width:100%;border-collapse:collapse;font-size:13px}
+.opt td{padding:5px 0;border-bottom:1px dotted var(--rule-strong);vertical-align:top}
+.opt td:last-child{text-align:right;white-space:nowrap;padding-left:10px;font-family:var(--mono);font-size:12.5px}
+.opt tr.tot td{border-bottom:0;border-top:1.5px solid var(--ink);font-weight:600;padding-top:7px}
+.optbox{max-height:250px;overflow:auto}
+.st-price{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;align-items:end;padding:14px 18px;border-top:2px solid var(--ink);background:var(--deal-soft)}
+.st-price .big{font:700 38px/1 var(--display);font-variant-numeric:tabular-nums}
+.st-price .lbl{margin:0 0 4px}
+.st-price .mkt{text-align:right;font-size:13px;color:var(--steel)}
+.st-ask{padding:14px 18px;border-top:1px solid var(--rule-strong);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;font-size:13.5px}
+.st-ask p{margin:0;max-width:52ch;color:var(--steel)}
+.mono{font-family:var(--mono)}
+
+@media (max-width:900px){
+  .inv{grid-template-columns:1fr}
+  aside{position:static}
+  .cats .wrap{grid-template-columns:1fr}
+  .trust .wrap{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:640px){
+  .steps,footer .wrap,.st-grid{grid-template-columns:1fr}
+  .st-col+.st-col{border-left:0;border-top:1px solid var(--rule-strong)}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  nav{display:none}
+}
+</style>
+</head>
+<body>
+<div class="util"><div class="wrap"><span>Dealer-to-dealer truck supply · Delivered to Texas</span><span id="utilContact">Dealer inquiries welcome</span></div></div>
+<header class="brand"><div class="wrap">
+  <div class="logo"><b>XD Auto</b><small>Truck Supply</small></div>
+  <nav aria-label="Main"><a href="#featured">New diesel</a><a href="#inventory" aria-current="page">Inventory</a><a href="#how">How it works</a><a href="#delivery">Delivery</a><a href="#contact">Contact</a></nav>
+  <div class="call" id="call"></div>
+</div></header>
+
+<section class="cats"><div class="wrap">
+  <div>
+    <h1>New diesel flagships and late-model US-built trucks</h1>
+    <p>F-350 Platinum High Output, Sierra 3500HD Denali Ultimate and AT4, Yukon XL diesel, plus used trucks priced below Texas market. Delivered to your lot. We have supplied dealers in Utah for nearly ten years.</p>
+  </div>
+  <div class="tiles" id="tiles" role="group" aria-label="Category"></div>
+  <div class="search"><input id="q" type="search" placeholder="Search year, model or trim, e.g. 2023 F-150 Lariat" aria-label="Search inventory"></div>
+</div></section>
+
+<section class="featured" id="featured" hidden><div class="wrap">
+  <h2>New diesel flagships</h2>
+  <p>Brand-new heavy-duty and full-size diesels. Send us a stock number for today's delivered price.</p>
+  <div id="fgroups"></div>
+</div></section>
+
+<section class="trust"><div class="wrap">
+  <div><b>Below Texas market</b>Every price is under the median of comparable Texas listings</div>
+  <div><b>History report included</b>Full history on every truck before you commit</div>
+  <div><b>Delivered to your lot</b>One delivered price in US dollars</div>
+  <div><b>US-built only</b>Previous-Canadian trucks, disclosed up front</div>
+</div></section>
+
+<main class="wrap inv" id="inventory">
+  <aside aria-label="Filters">
+    <h2>Filter</h2>
+    <div class="fgroup"><span class="lbl">Model</span><div id="fModel" style="display:grid;gap:6px"></div></div>
+    <div class="fgroup"><span class="lbl">Features</span>
+      <label class="check"><input type="checkbox" id="fDiesel"> Diesel<span id="nDiesel"></span></label>
+      <label class="check"><input type="checkbox" id="f4x4"> 4x4<span id="n4x4"></span></label>
+      <label class="check"><input type="checkbox" id="fSpec"> Window sticker on file<span id="nSpec"></span></label>
+    </div>
+    <div class="fgroup"><label for="fYear">Year from</label><select id="fYear"></select></div>
+    <div class="fgroup"><label for="fPrice">Max price (USD)</label><input id="fPrice" type="number" inputmode="numeric" step="1000" placeholder="Any"></div>
+    <div class="fgroup"><label for="fMiles">Max miles</label><input id="fMiles" type="number" inputmode="numeric" step="5000" placeholder="Any"></div>
+    <div class="fgroup"><button type="button" class="reset" id="reset">Clear all filters</button></div>
+  </aside>
+  <section aria-label="Inventory">
+    <div class="bar"><h2 id="count"></h2>
+      <label for="sort">Sort by <select id="sort"><option value="new">Year: newest</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option><option value="miles">Mileage: lowest</option><option value="under">Furthest below market</option></select></label>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+</main>
+
+<section class="how" id="how"><div class="wrap">
+  <h2>How it works</h2>
+  <div class="steps">
+    <div><b>Send us the stock number</b><p>Pick a truck and send us its stock number (XD-…). Tell us what else you are looking for, too.</p></div>
+    <div><b>We confirm and send details</b><p>We confirm availability, then send photos, a walk-around video and the full history report.</p></div>
+    <div id="delivery"><b>Delivered to your lot</b><p>Approve the truck and we deliver it to your dealership in Texas at the listed price.</p></div>
+  </div>
+</div></section>
+
+<footer id="contact"><div class="wrap">
+  <div><h4>XD Auto</h4><p>Truck supply for independent dealers. Supplying Utah dealers for nearly ten years, now serving Texas.</p></div>
+  <div><h4>Contact</h4><p id="footContact">Dealer inquiries: contact details coming soon.</p></div>
+  <div><h4>About these listings</h4><p>Prices in US dollars, delivered to Texas. Inventory updates daily and every truck is subject to availability. Factory options are from the original window sticker, priced in Canadian dollars as printed. <span id="built"></span></p></div>
+</div></footer>
+
+<dialog id="dlg" aria-labelledby="dlgTitle"><div class="sticker" id="sheet"></div></dialog>
+
+<script>
+const D = {"built":"2026-10-24","rows":[{"id":"XD-9DGHU","y":2026,"mk":"Ford","m":"F-150","t":"Tremor","e":"","d":"","c":"Iconic Silver Metallic","cfg":"Crew Cab · 3.5 L Gasoline","mi":"~1,000 mi","mi_n":1000,"price":65600,"tx":68020,"n":3,"spec":{"group":"402A","msrp":99545,"opt":15220,"items":[["Twin Panel Moonroof",1750],["Bedliner Touh Bed Spray-In",700],["Engine Block Heater",550]]},"hist":null},{"id":"XD-Z4GVB","y":2026,"mk":"GMC","m":"Sierra 3500HD","t":"Denali Ultimate","e":"Duramax turbo-diesel","d":"","c":"","cfg":"Crew Cab · 6.6 L Diesel","mi":"~8,000 mi","mi_n":8000,"price":87200,"tx":91216,"n":6,"spec":{"group":"","msrp":133067,"opt":1169,"items":[["Gooseneck/5Th Wheel Prep",630]]},"hist":"clean"},{"id":"XD-NRPT9","y":2026,"mk":"GMC","m":"Sierra 3500HD","t":"Denali","e":"Duramax turbo-diesel","d":"","c":"White","cfg":"Crew Cab · 6.6 L Diesel","mi":"~14,000 mi","mi_n":14000,"price":80900,"tx":84607,"n":4,"spec":{"group":"","msrp":null,"opt":null,"items":[["D Uproawmearx S6U.6Nlr Vo8O Tfurbo Diesel",10995],["D Wuraarmraanxt 6Y .B6Ol Ovk8L Teutrbo Diesel",10995],["Denali Reserve Package",2365],["Glacier White Tricoat",1195]]},"hist":"clean"},{"id":"XD-WDQAC","y":2026,"mk":"GMC","m":"Sierra 3500HD","t":"Denali","e":"Duramax turbo-diesel","d":"","c":"Silver","cfg":"Crew Cab · 6.6 L Diesel","mi":"~21,000 mi","mi_n":21000,"price":80900,"tx":84923,"n":3,"spec":null,"hist":"clean"},{"id":"XD-GK6ZC","y":2026,"mk":"GMC","m":"Sierra 1500","t":"Elevation","e":"","d":"","c":"Blue","cfg":"Crew Cab · 5.3 L Gasoline","mi":"~23,000 mi","mi_n":23000,"price":49500,"tx":52924,"n":6,"spec":{"group":"","msrp":null,"opt":null,"items":[["E L Ine V- Va E Th Io Ic Nl Ep Rt Er Ma Iil Ue M R I N Pg A Ca Kp Ap G E",4395],["X 3 R1 E O Af R F -Cr Ro Oa D S S P A Tc Rk A Af Gf E Ic B R A K I N G",1545],["Fr Soknitd B Pulcakteets Seats With Centre",755]]},"hist":"clean"},{"id":"XD-H8Q6K","y":2025,"mk":"GMC","m":"Sierra 2500HD","t":"SLE","e":"","d":"","c":"White","cfg":"Crew Cab · 6.6 L Gasoline","mi":"~20,000 mi","mi_n":20000,"price":53600,"tx":57113,"n":3,"spec":{"group":"","msrp":null,"opt":null,"items":[["Sl Ttiuenrr Nc-Aaoviiivlnleeeevhrreri Cns Csilaaeiednml Ce Tehe Rrb Opaala Miipnlcreekdoar Rzvginioeesgmnio Eoan Apstlpeert",1325]]},"hist":"clean"},{"id":"XD-H6ZLZ","y":2025,"mk":"Ford","m":"F-150","t":"XL","e":"","d":"4x4","c":"","cfg":"Regular Cab · 5.0 L Gasoline","mi":"~26,000 mi","mi_n":26000,"price":45300,"tx":49306,"n":10,"spec":null,"hist":"clean"},{"id":"XD-TZ2D5","y":2025,"mk":"GMC","m":"Sierra 3500HD","t":"AT4","e":"Duramax turbo-diesel","d":"","c":"White","cfg":"Crew Cab · 6.6 L Diesel","mi":"~31,000 mi","mi_n":31000,"price":69600,"tx":73608,"n":3,"spec":null,"hist":null},{"id":"XD-5BWY5","y":2025,"mk":"Ford","m":"F-350","t":"Lariat","e":"6.7L Power Stroke diesel","d":"","c":"","cfg":"Crew Cab · 6.7 L Diesel","mi":"~37,000 mi","mi_n":37000,"price":71300,"tx":74844,"n":3,"spec":{"group":"618A","msrp":113164,"opt":19130,"items":[["6.7L Power Stroke V8 Diesel",10975],["Black Appearance Pkg",4050],["5Th Wheel Hitch Prep Package",1525],["Star White",800],["Power Sliding Rear Window",550],["Fx4 Off-Road Package",450],["Tailgate Step",400],["Securicode Keyless Entry Keypa",280]]},"hist":"clean"},{"id":"XD-YPM6M","y":2025,"mk":"GMC","m":"Sierra 3500HD","t":"Denali Ultimate","e":"Duramax turbo-diesel","d":"","c":"","cfg":"Crew Cab · 6.6 L Diesel","mi":"~40,000 mi","mi_n":40000,"price":80700,"tx":84708,"n":4,"spec":{"group":"","msrp":null,"opt":null,"items":[["G O O S E N E C K / 5 T H W H Ee L P R Ep",630],["Sport Pedal Cover Kit",280]]},"hist":"clean"},{"id":"XD-YZSHJ","y":2024,"mk":"GMC","m":"Sierra 1500","t":"Elevation","e":"","d":"","c":"","cfg":"Crew Cab · 5.3 L Gasoline","mi":"~27,000 mi","mi_n":27000,"price":44900,"tx":48946,"n":5,"spec":{"group":"","msrp":75214,"opt":6515,"items":[["5.3L Ecotec3 V8 Engine",2995],["Elevation Black Package",1545],["X31 Off-Road Package",1065],["Spray-On Bedliner",625],["Trailer Brake Controller",350],["275/60R-20 All-Terrain Tires",250],["Engine Block Heater",195],["Standard Tailgate (Deletes",-510]]},"hist":null},{"id":"XD-D4TRC","y":2024,"mk":"GMC","m":"Sierra 1500","t":"Denali","e":"Duramax turbo-diesel","d":"","c":"","cfg":"Crew Cab · 3.0 L Diesel","mi":"~38,000 mi","mi_n":38000,"price":48000,"tx":51883,"n":11,"spec":{"group":"","msrp":95589,"opt":5990,"items":[["Denali Reserve Package",4695],["Duramax 3.0L Turbo-Diesel",1195]]},"hist":"clean"},{"id":"XD-3PNC9","y":2024,"mk":"GMC","m":"Sierra 3500HD","t":"Denali Ultimate","e":"Duramax turbo-diesel","d":"","c":"Black","cfg":"Crew Cab · 6.6 L Diesel","mi":"~48,000 mi","mi_n":48000,"price":69900,"tx":73881,"n":4,"spec":{"group":"","msrp":127769,"opt":870,"items":[["Gooseneck/5Th Wheel Prep",630],["High Idle Switch",240]]},"hist":"clean"},{"id":"XD-VKV48","y":2024,"mk":"GMC","m":"Sierra 1500","t":"Elevation","e":"Duramax turbo-diesel","d":"","c":"White","cfg":"Crew Cab · 3.0 L Diesel","mi":"~63,000 mi","mi_n":63000,"price":39900,"tx":43913,"n":4,"spec":{"group":"","msrp":null,"opt":13515,"items":[["E L E V A T I O N P R E M I U M P A C K A G E",4760],["D U H R E A A M V Ay X- D 3 U . 0T Ly T A U I Rr B F O I L - Td Ei E R S E L",4190],["X 3 1 O F F - R O A D P A C K A G E",1065],["X 3 1 O F F - R O A D P A C K A G E",1065]]},"hist":null},{"id":"XD-QLL6P","y":2024,"mk":"Ford","m":"F-150","t":"STX","e":"","d":"","c":"","cfg":"Crew Cab · 5.0 L Flexible-Fuel","mi":"~68,000 mi","mi_n":68000,"price":36000,"tx":39309,"n":10,"spec":{"group":"200A","msrp":71175,"opt":6540,"items":[["5.0L V8 Engine",2375],["Stx Black Appearance Package",1600],["Tow/Haul Package",1075],["Mobile Office Package",765],["275/60R-20 Bsw All-Terrain Stx Black Pack Discount -",500],["Engine Block Heater",375],["Liner-Tray Style-W/Carpet Mat",250]]},"hist":null},{"id":"XD-WGJ25","y":2023,"mk":"Ford","m":"F-150","t":"XLT","e":"","d":"","c":"Iconic Silver Metallic","cfg":"Crew Cab · 3.5 L Hybrid","mi":"~30,000 mi","mi_n":30000,"price":34500,"tx":38231,"n":7,"spec":{"group":"300A","msrp":67495,"opt":6275,"items":[["3.5L Powerboost Full-Hybrid",6175]]},"hist":"clean"},{"id":"XD-QT66S","y":2023,"mk":"GMC","m":"Sierra 1500","t":"Denali","e":"","d":"","c":"White","cfg":"Crew Cab · 6.2 L Gasoline","mi":"~45,000 mi","mi_n":45000,"price":47300,"tx":48674,"n":7,"spec":{"group":"","msrp":91973,"opt":5675,"items":[]},"hist":null},{"id":"XD-CC2HR","y":2023,"mk":"Ford","m":"F-150","t":"Lariat","e":"","d":"","c":"Rapid Red Metallic Tinted Clearcoat","cfg":"Crew Cab · 5.0 L Flexible-Fuel","mi":"~46,000 mi","mi_n":46000,"price":46500,"tx":49652,"n":10,"spec":{"group":"502A","msrp":87230,"opt":9985,"items":[["5.0L V8 Engine",2375],["Power Deployable Running Bds",1300],["Fx4 Off Road Package",1000],["360 Degree Camera",850],["Rapid Red Met Tinted Cc",600],["Chmsl Camera Removal -",225],["Advanced Security Pack Removal -",65],["Trailer Tow Package",0],["Lariat Sport Package",0]]},"hist":"clean"},{"id":"XD-KKCL4","y":2023,"mk":"Ford","m":"F-150","t":"Lariat","e":"","d":"","c":"Silver","cfg":"Crew Cab · 3.5 L Gasoline","mi":"~56,000 mi","mi_n":56000,"price":44200,"tx":47189,"n":20,"spec":{"group":"502A","msrp":91930,"opt":14685,"items":[["3.5L V6 Ecoboost Engine",2075],["Twin Panel Moonroof",1750],["Lariat Black Appearance Pkg",1500],["Fx4 Off Road Package",1000],["Pwr-Deployable Bds W/Blk Accnt",950],["B&O Unleashed Sound Sys 18Spkr",900],["360 Degree Camera",850],["Power Tailgate",800],["Chmsl Camera Removal -",225],["Liner-Tray Style-No Carpet Mat",200],["Advanced Security Pack Removal -",65],["Trailer Tow Package",0],["Lariat Sport Package",0]]},"hist":null},{"id":"XD-L88VP","y":2023,"mk":"GMC","m":"Sierra 1500","t":"Denali","e":"","d":"","c":"White","cfg":"Crew Cab · 6.2 L Gasoline","mi":"~58,000 mi","mi_n":58000,"price":45000,"tx":48216,"n":8,"spec":{"group":"","msrp":97968,"opt":10470,"items":[["6.2L Ecotec3 V8 Engine W/Dfm",3010],["Super Cruise(Tm), Requires",2610],["Technology Package",2185],["Power Sunroof",1325],["White Frost Tricoat",1195],["Engine Block Heater",195]]},"hist":null},{"id":"XD-QU8QY","y":2023,"mk":"Ford","m":"F-150","t":"Tremor","e":"","d":"4x4","c":"","cfg":"Crew Cab · 3.5 L Gasoline","mi":"~74,000 mi","mi_n":74000,"price":43500,"tx":46841,"n":14,"spec":{"group":"401A","msrp":77880,"opt":1790,"items":[["Twin Panel Moonroof",1750],["Auto Start-Stop Removal -",60]]},"hist":"clean"},{"id":"XD-S5W7U","y":2023,"mk":"Ford","m":"F-150","t":"XLT","e":"","d":"","c":"Xlt 4wd SuperCrew 5.5' Box","cfg":"Crew Cab · 3.5 L Hybrid","mi":"~88,000 mi","mi_n":88000,"price":36000,"tx":39844,"n":5,"spec":{"group":"302A","msrp":82405,"opt":20985,"items":[["3.5L Powerboost Full-Hybrid",6175],["Xlt Black Appearance Package",2500],["Twin Panel Moonroof",1750],["Fx4 Off Road Package",1000],["Max Trailer Tow Package",950],["B&O Sound System, 8 Spkr",900],["Tailgate Step",470]]},"hist":null},{"id":"XD-NBQAL","y":2023,"mk":"GMC","m":"Sierra 1500","t":"AT4","e":"","d":"","c":"Silver","cfg":"Crew Cab · 6.2 L Gasoline","mi":"~95,000 mi","mi_n":95000,"price":39000,"tx":42745,"n":9,"spec":{"group":"","msrp":84798,"opt":3950,"items":[]},"hist":null},{"id":"XD-6QMRH","y":2023,"mk":"Ford","m":"F-150","t":"Lariat","e":"","d":"","c":"White","cfg":"Crew Cab · 3.5 L Gasoline","mi":"~104,000 mi","mi_n":104000,"price":34100,"tx":36419,"n":7,"spec":{"group":"502A","msrp":86350,"opt":6730,"items":[["Max Trailer Tow Package",950],["360 Degree Camera",850],["Star White Met Tri-Coat",800],["Mirror Pwr Tele/Glass/Fold",570],["3.5L V6 Ecoboost Engine -",300],["Chmsl Camera Removal -",225],["Advanced Security Pack Removal -",65]]},"hist":null},{"id":"XD-3BZG9","y":2022,"mk":"Ford","m":"F-150","t":"XLT","e":"","d":"","c":"Gray","cfg":"Crew Cab · 3.5 L Gasoline","mi":"~41,000 mi","mi_n":41000,"price":33800,"tx":36976,"n":7,"spec":null,"hist":"clean"},{"id":"XD-4CHLR","y":2022,"mk":"Ford","m":"F-150","t":"XLT","e":"","d":"","c":"Agate Black Metallic","cfg":"Crew Cab · 5.0 L Flexible-Fuel","mi":"~47,000 mi","mi_n":47000,"price":37500,"tx":40014,"n":7,"spec":{"group":"302A","msrp":65720,"opt":9970,"items":[["Fx4 Off Road Package",950],["B&O Sound System, 8 Spkr",900],["Tailgate Step",470],["Liner-Tray Style-W/Carpet Mat",250],["Power-Adjustable Pedals",140],["Auto Start-Stop Removal -",60],["Trailer Tow Package",0]]},"hist":"clean"},{"id":"XD-94MX8","y":2022,"mk":"Ford","m":"F-150","t":"XLT","e":"","d":"","c":"","cfg":"Crew Cab · 5.0 L Flexible-Fuel","mi":"~48,000 mi","mi_n":48000,"price":37000,"tx":40747,"n":7,"spec":{"group":"301A","msrp":67975,"opt":11855,"items":[["5.0L V8 Engine",3825],["Xlt Sport Package",1850],["Trailer Tow Package",1125],["Fx4 Off Road Package",950],["Tailgate Step",470],["400W Outlet",365],["Liner-Tray Style-W/Carpet Mat",250],["Auto Start-Stop Removal -",60]]},"hist":null},{"id":"XD-269LV","y":2022,"mk":"Ford","m":"F-150","t":"Lariat","e":"","d":"","c":"Agate_black_metallic","cfg":"Crew Cab · 3.5 L Gasoline","mi":"~52,000 mi","mi_n":52000,"price":42000,"tx":43976,"n":10,"spec":{"group":"502A","msrp":80695,"opt":15770,"items":[["3.5L V6 Ecoboost Engine",2350],["Twin Panel Moonroof",1750],["Pro Power Onboard - 2Kw",1300],["275/60R-20 Bsw All-Terrain",1000],["Max Trailer Tow Package",950],["Fx4 Off Road Package",950],["360 Degree Camera",850],["B&O Unleashed Sound Sys 18Spkr",800],["Power Tailgate",800],["Onboard Scale W/ Smart Hitch",350],["Liner-Tray Style-No Carpet Mat",200],["Auto Start-Stop Removal -",60],["Lariat Sport Package",0]]},"hist":"clean"},{"id":"XD-GEMX5","y":2022,"mk":"GMC","m":"Sierra 1500","t":"AT4","e":"","d":"","c":"","cfg":"Crew Cab · 6.2 L Gasoline","mi":"~56,000 mi","mi_n":56000,"price":45700,"tx":49332,"n":4,"spec":{"group":"","msrp":82633,"opt":7890,"items":[["Technology Package",1900],["6.2L Ecotec3 V8 Engine W/Dfm",1750],["Power Sunroof",1325],["Sierra Safety Plus Package",1090],["At4 Preferred Package",1050],["Rear Under Seat Storage",355],["All-Weather Floor Liners",270],["Engine Block Heater",195],["Wheel Locks",80]]},"hist":"clean"},{"id":"XD-AW3KC","y":2022,"mk":"Ford","m":"F-150","t":"XLT","e":"","d":"","c":"Agate Black Metallic","cfg":"Crew Cab · 5.0 L Flexible-Fuel","mi":"~64,000 mi","mi_n":64000,"price":35800,"tx":39788,"n":7,"spec":{"group":"302A","msrp":71400,"opt":17250,"items":[["Twin Panel Moonroof",1750],["Pro Power Onboard - 2Kw",1300],["Ford Co-Pilot360 Assist 2.0",1250],["275/60R-20 Bsw All-Terrain",1000],["Max Trailer Tow Package",950],["Fx4 Off Road Package",950],["B&O Sound System, 8 Spkr",900],["Interior Work Surface",400],["Mirror Manual Tele W/Pwr Glass",360],["Onboard Scale W/ Smart Hitch",350],["Auto Start-Stop Removal -",60]]},"hist":null},{"id":"XD-2MEWU","y":2022,"mk":"Ford","m":"F-150","t":"Lariat","e":"","d":"","c":"Space White Metallic","cfg":"Crew Cab · 5.0 L Flexible-Fuel","mi":"~106,000 mi","mi_n":106000,"price":37200,"tx":41186,"n":7,"spec":{"group":"502A","msrp":81545,"opt":15570,"items":[["5.0L V8 Engine",2650],["Twin Panel Moonroof",1750],["Pro Power Onboard - 2Kw",1300],["275/60R-20 Bsw All-Terrain",1000],["Fx4 Off Road Package",950],["360 Degree Camera",850],["B&O Unleashed Sound Sys 18Spkr",800],["Power Tailgate",800],["Interior Work Surface",400],["Onboard Scale W/ Smart Hitch",350],["Liner-Tray Style-W/Carpet Mat",250],["Auto Start-Stop Removal -",60],["Trailer Tow Package",0],["Lariat Sport Package",0]]},"hist":null},{"id":"XD-JQ78N","y":2021,"mk":"Ford","m":"F-150","t":"XLT","e":"","d":"","c":"Agate Black Metallic","cfg":"Crew Cab · 5.0 L Flexible-Fuel","mi":"~59,000 mi","mi_n":59000,"price":35200,"tx":37998,"n":5,"spec":{"group":"300A","msrp":57509,"opt":3875,"items":[["Xtr Package",1350],["Trailer Tow Package",1125],["Fx4 Off Road Package",950],["Mirror Man Fold W/Power Glass",350]]},"hist":null},{"id":"XD-9T836","y":2021,"mk":"Ford","m":"F-150","t":"Lariat","e":"","d":"","c":"Carbonized Grey Metallic","cfg":"Crew Cab · 5.0 L Flexible-Fuel","mi":"~96,000 mi","mi_n":96000,"price":34100,"tx":38078,"n":8,"spec":{"group":"502A","msrp":80675,"opt":14385,"items":[["Twin Panel Moonroof",1750],["Power Deployable Running Bds",1300],["Pro Power Onboard - 2Kw",1300],["275/60R-20 Bsw All-Terrain",1000],["Max Trailer Tow Package",950],["Fx4 Off Road Package",950],["360 Degree Camera",850],["B&O Unleashed Sound Sys 18Spkr",800],["Power Tailgate",800],["Ford Co-Pilot360 Assist 2.0 Off Road Discount -",550],["Interior Work Surface",400],["Auto Start-Stop Removal -",60],["Lariat Sport Package",0]]},"hist":null},{"id":"XD-PGACN","y":2020,"mk":"Ford","m":"F-150","t":"Lariat","e":"","d":"","c":"Velocity Blue","cfg":"Crew Cab · 5.0 L Flexible-Fuel","mi":"~121,000 mi","mi_n":121000,"price":29300,"tx":33270,"n":3,"spec":{"group":"502A","msrp":72959,"opt":11460,"items":[["5.0L V8 Engine",2350],["Twin Panel Moonroof",1750],["Technology Package",1070],["Fx4 Off Road Package",750],["Integrated Trlr Brake Cntrl",350],["Floor Liner - Tray Style",250],["Lariat Sport Package",0]]},"hist":null},{"id":"XD-8MH4G","y":2020,"mk":"Ford","m":"F-150","t":"XLT","e":"","d":"","c":"Rapid Red Metallic Tinted Clea","cfg":"Crew Cab · 5.0 L Flexible-Fuel","mi":"~156,000 mi","mi_n":156000,"price":22400,"tx":23914,"n":6,"spec":{"group":"302A","msrp":61269,"opt":12650,"items":[["5.0L V8 Engine",3050],["Voice-Activated Navigation",800],["Fx4 Off Road Package",750],["Xlt Sport Package",500],["Rapid Red Met Tinted Cc",450],["Tailgate Step",400],["Lt275/65R18 Owl All-Terrain",350],["Integrated Trlr Brake Cntrl",350]]},"hist":null}],"feat":[{"y":2027,"mk":"Ford","m":"F-350","t":"Platinum Plus","e":"6.7L High Output Power Stroke V8 diesel","d":"SRW · 4x4","c":"Star White Metallic","cfg":"Crew Cab","spec":{"group":"713A","msrp":138399,"opt":29294,"items":[["6.7L Ho Powerstroke V8 Dsl",15725],["Platinum Plus Package",7550],["5Th Whl/Gooseneck Hitch Prep",1525],["Tough Bed Spray In Bedliner",850],["Star White Metallic",800],["On-Board Scales & Smart Hitch",575],["Securicode Keyless Entry Pad",569],["Fx4 Off-Road Package",525],["All Weather Mats W/O Carpt Mat",200],["Led Roof Clearance Lights",180],["10-Speed Auto Torqshift",0],["3.55 Electronic Locking Axle",0],["Power Running Board",0],["Engine Block Heater",0]]},"id":"XD-WKVLK","g":"f350_plus","mi":"New","mi_n":0,"price":null,"tx":null,"n":0},{"y":2027,"mk":"Ford","m":"F-350","t":"Platinum Plus","e":"6.7L High Output Power Stroke V8 diesel","d":"SRW · 4x4","c":"Glacier Grey Metallic","cfg":"Crew Cab","spec":{"group":"713A","msrp":138250,"opt":29745,"items":[["6.7L Ho Powerstroke V8 Dsl",15725],["Platinum Plus Package",7550],["5Th Whl/Gooseneck Hitch Prep",1525],["Conn Pkg: 1 Time 7Yr",995],["Tough Bed Spray In Bedliner",850],["Glacier Grey Metallic",800],["Wheel Well Liners Front & Rear",600],["Fx4 Off-Road Package",525],["All Weather Mats W/O Carpt Mat",200],["Led Roof Clearance Lights",180],["10-Speed Auto Torqshift",0],["3.31 Electronic Locking Axle",0],["Power Running Board",0],["Engine Block Heater",0]]},"id":"XD-SZXMZ","g":"f350_plus","mi":"New","mi_n":0,"price":null,"tx":null,"n":0},{"y":2027,"mk":"Ford","m":"F-350","t":"Platinum Plus","e":"6.7L High Output Power Stroke V8 diesel","d":"SRW · 4x4","c":"Glacier Grey Metallic","cfg":"Crew Cab","spec":{"group":"713A","msrp":138043,"opt":29538,"items":[["6.7L Ho Powerstroke V8 Dsl",15725],["Platinum Plus Package",7550],["Digital Rearview Mirror",1050],["Tough Bed Spray In Bedliner",850],["Glacier Grey Metallic",800],["Wheel Well Liners Front & Rear",600],["On-Board Scales & Smart Hitch",575],["Securicode Keyless Entry Pad",569],["Fx4 Off-Road Package",525],["Siriusxm W/360L (3 Yr Plan)",299],["All Weather Mats W/O Carpt Mat",200],["10-Speed Auto Torqshift",0],["3.55 Electronic Locking Axle",0],["Power Running Board",0],["Engine Block Heater",0]]},"id":"XD-K3T78","g":"f350_plus","mi":"New","mi_n":0,"price":null,"tx":null,"n":0},{"y":2027,"mk":"Ford","m":"F-350","t":"Platinum Plus","e":"6.7L High Output Power Stroke V8 diesel","d":"SRW · 4x4","c":"Agate Black Metallic","cfg":"Crew Cab","spec":{"group":"713A","msrp":137923,"opt":28818,"items":[["6.7L Ho Powerstroke V8 Dsl",15725],["Platinum Plus Package",7550],["5Th Whl/Gooseneck Hitch Prep",1525],["Tough Bed Spray In Bedliner",850],["Wheel Well Liners Front & Rear",600],["Securicode Keyless Entry Pad",569],["Fx4 Off-Road Package",525],["Siriusxm W/360L (3 Yr Plan)",299],["All Weather Mats W/O Carpt Mat",200],["Led Roof Clearance Lights",180],["10-Speed Auto Torqshift",0],["3.31 Electronic Locking Axle",0],["Power Running Board",0],["Engine Block Heater",0]]},"id":"XD-SUTYF","g":"f350_plus","mi":"New","mi_n":0,"price":null,"tx":null,"n":0},{"y":2026,"mk":"GMC","m":"Sierra 3500HD","t":"Denali Ultimate","e":"6.6L Duramax turbo-diesel V8","d":"4WD","c":"Black","cfg":"","spec":null,"id":"XD-YLAL4","g":"sierra","mi":"New","mi_n":0,"price":null,"tx":null,"n":0},{"y":2026,"mk":"GMC","m":"Sierra 3500HD","t":"Denali Ultimate","e":"6.6L Duramax turbo-diesel V8","d":"4WD","c":"Black","cfg":"","spec":null,"id":"XD-R97FL","g":"sierra","mi":"New","mi_n":0,"price":null,"tx":null,"n":0},{"y":2026,"mk":"GMC","m":"Sierra 3500HD","t":"AT4","e":"6.6L Duramax turbo-diesel V8","d":"4WD","c":"Black","cfg":"","spec":null,"id":"XD-RWGDJ","g":"sierra","mi":"New","mi_n":0,"price":null,"tx":null,"n":0},{"y":2026,"mk":"GMC","m":"Sierra 3500HD","t":"AT4","e":"6.6L Duramax turbo-diesel V8","d":"4WD","c":"Black","cfg":"","spec":null,"id":"XD-6ENF2","g":"sierra","mi":"New","mi_n":0,"price":null,"tx":null,"n":0},{"y":2027,"mk":"GMC","m":"Yukon XL","t":"Denali Ultimate","e":"3.0L Duramax turbo-diesel","d":"4WD","c":"Gba","cfg":"","spec":null,"id":"XD-Z9NHD","g":"yukon","mi":"New","mi_n":0,"price":null,"tx":null,"n":0},{"y":2027,"mk":"GMC","m":"Yukon XL","t":"Denali Ultimate","e":"3.0L Duramax turbo-diesel","d":"4WD","c":"Glacier White Tricoat","cfg":"","spec":null,"id":"XD-5DTDZ","g":"yukon","mi":"New","mi_n":0,"price":null,"tx":null,"n":0},{"y":2027,"mk":"GMC","m":"Yukon XL","t":"Denali Ultimate","e":"3.0L Duramax turbo-diesel","d":"4WD","c":"Glacier White Tricoat","cfg":"","spec":null,"id":"XD-HLL6V","g":"yukon","mi":"New","mi_n":0,"price":null,"tx":null,"n":0},{"y":2027,"mk":"GMC","m":"Yukon XL","t":"Denali Ultimate","e":"3.0L Duramax turbo-diesel","d":"4WD","c":"White","cfg":"","spec":null,"id":"XD-7GR9X","g":"yukon","mi":"New","mi_n":0,"price":null,"tx":null,"n":0}],"groups":[{"k":"f350_plus","title":"F-350 Platinum Plus","sub":"6.7L High Output Power Stroke V8 diesel"},{"k":"sierra","title":"Sierra 3500HD","sub":"Denali Ultimate · AT4 · 6.6L Duramax turbo-diesel V8"},{"k":"yukon","title":"Yukon","sub":"3.0L Duramax turbo-diesel"}],"contact":{"name":"","phone":"","email":""}};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const usd = n => "$" + Math.round(n).toLocaleString("en-US");
+const pct = r => Math.max(0, Math.round((r.tx - r.price) / r.tx * 100));
+const cab = r => (r.cfg || "").split(" · ")[0];
+const engine = r => r.e || (r.cfg || "").split(" · ")[1] || "";
+const isDiesel = r => /diesel|power ?stroke|duramax/i.test(`${engine(r)} ${r.cfg}`);
+const is4x4 = r => /4wd|4x4|awd/i.test(`${r.d} ${r.cfg}`);
+const PAINT = [[/white|oxford|summit|glacier|iridescent/i, "#f2f3f1"], [/black|onyx|agate|midnight/i, "#1d2126"],
+  [/silver|iconic|sterling|quicksilver/i, "#b9bec3"], [/gr[ae]y|carbon|graphite|satin steel|thunder|magnetic|smoke|titanium|shadow/i, "#6c737a"],
+  [/red|ruby|cayenne|velvet|cardinal|maroon|race/i, "#9b2c2c"], [/blue|antimatter|velocity|atlas|denim|navy|azure/i, "#2a4f86"],
+  [/green|forest|olive|hunter|army/i, "#4b5d3f"], [/bronze|copper|brown|tan|desert|sand|stone|beige|kodiak/i, "#8a6d4b"],
+  [/orange|lava/i, "#c25a1c"], [/yellow|gold/i, "#c9a227"]];
+const paint = c => (PAINT.find(([re]) => re.test(c || "")) || [0, "#8b939b"])[1];
+const CATS = [["All trucks", () => true, "Everything listed"], ["Half-ton", r => /F-150|1500|Tundra/.test(r.m), "F-150 · Sierra 1500 · Tundra"],
+  ["Heavy duty", r => /F-350|HD$/.test(r.m), "F-350 · Sierra 2500 / 3500HD"]];
+const S = {cat: "All trucks", models: new Set(), diesel: false, x4: false, spec: false, year: 0, price: "", miles: "", q: "", sort: "new"};
+
+function pass(r, skip) {
+  if (skip !== "cat" && !CATS.find(c => c[0] === S.cat)[1](r)) return false;
+  if (skip !== "model" && S.models.size && !S.models.has(r.m)) return false;
+  if (S.diesel && !isDiesel(r)) return false;
+  if (S.x4 && !is4x4(r)) return false;
+  if (S.spec && !r.spec) return false;
+  if (S.year && r.y < S.year) return false;
+  if (S.price && r.price > +S.price) return false;
+  if (S.miles && r.mi_n > +S.miles) return false;
+  if (S.q) {
+    const hay = `${r.y} ${r.mk} ${r.m} ${r.t} ${engine(r)} ${r.d} ${r.c} ${r.id}`.toLowerCase();
+    if (!S.q.toLowerCase().split(/\s+/).every(w => hay.includes(w))) return false;
+  }
+  return true;
+}
+function list() {
+  const by = {new: (a, b) => b.y - a.y || a.mi_n - b.mi_n, low: (a, b) => a.price - b.price, high: (a, b) => b.price - a.price,
+    miles: (a, b) => a.mi_n - b.mi_n, under: (a, b) => pct(b) - pct(a)};
+  return D.rows.filter(r => pass(r)).sort(by[S.sort]);
+}
+function tiles() {
+  $("#tiles").innerHTML = CATS.map(([n, f, sub]) => `<button type="button" class="tile" aria-pressed="${n === S.cat}" data-c="${esc(n)}">
+    <b>${esc(n)}</b><span>${D.rows.filter(f).length} trucks · ${esc(sub)}</span></button>`).join("");
+  $("#tiles").querySelectorAll(".tile").forEach(b => b.onclick = () => { S.cat = b.dataset.c; S.models.clear(); render(); });
+}
+function sidebar() {
+  const models = [...new Set(D.rows.map(r => r.m))].sort();
+  $("#fModel").innerHTML = models.map(mo => {
+    const n = D.rows.filter(r => r.m === mo && pass(r, "model")).length;
+    return `<label class="check"><input type="checkbox" data-m="${esc(mo)}" ${S.models.has(mo) ? "checked" : ""}> ${esc(mo)}<span>${n}</span></label>`;
+  }).join("");
+  $("#fModel").querySelectorAll("input").forEach(i => i.onchange = () => { i.checked ? S.models.add(i.dataset.m) : S.models.delete(i.dataset.m); render(); });
+  $("#nDiesel").textContent = D.rows.filter(isDiesel).length;
+  $("#n4x4").textContent = D.rows.filter(is4x4).length;
+  $("#nSpec").textContent = D.rows.filter(r => r.spec).length;
+}
+const FEAT = D.feat || [];
+const ref = r => r.price == null ? `data-f="${FEAT.indexOf(r)}"` : `data-i="${D.rows.indexOf(r)}"`;
+const priceBlock = r => r.price == null
+  ? `<div class="ask"><span>Delivered price</span><b>Call for price</b></div>`
+  : `<div class="row"><span>Texas market</span><s>${usd(r.tx)}</s></div>
+        <div class="feat"><span>Delivered price</span><b>${usd(r.price)}</b></div>
+        <span class="save">${pct(r)}% under market</span>`;
+function card(r) {
+  const at = ref(r);
+  return `<article class="card">
+    <button type="button" class="slot" ${at} aria-label="${esc(`${r.y} ${r.m} ${r.t}, ${r.mi}`)}">
+      <span class="yr">${r.y} · ${esc(r.m)}</span>${r.price == null ? `<span class="new">New</span>` : ""}
+      <span class="tr">${esc(r.t)}</span>
+      <span class="mi">${esc(r.mi.replace("~", ""))}</span>
+      <span class="paint"><span><i style="background:${paint(r.c)}"></i>${esc(r.c || "Color on request")}</span><span>Photos on request</span></span>
+    </button>
+    <div class="cbody">
+      <h3>${r.y} ${esc(r.mk)} ${esc(r.m)} ${esc(r.t)}</h3>
+      <div class="facts">${[engine(r), r.d, cab(r)].filter(Boolean).map(esc).join(" · ")}</div>
+      <div class="facts">${esc(r.mi)} · Stock # <span class="code">${esc(r.id)}</span></div>
+      <div class="prices">
+        ${priceBlock(r)}
+      </div>
+      <button type="button" class="btn" ${at}>${r.price == null ? "Request price" : "Check availability"}</button>
+    </div></article>`;
+}
+function render() {
+  tiles(); sidebar();
+  const rs = list();
+  $("#count").innerHTML = `${rs.length} trucks <span>available</span>`;
+  $("#grid").innerHTML = rs.length ? rs.map(card).join("") : `<div class="empty">No trucks match these filters. Clear a filter or try another search.</div>`;
+  $("#grid").querySelectorAll("[data-i]").forEach(b => b.onclick = () => open(D.rows[+b.dataset.i]));
+}
+function featured() {
+  const gs = (D.groups || []).filter(g => FEAT.some(r => r.g === g.k));
+  if (!gs.length) return;
+  $("#fgroups").innerHTML = gs.map(g => {
+    const rs = FEAT.filter(r => r.g === g.k);
+    return `<div class="fgrp"><div class="fgrp-h"><h3>${esc(g.title)}</h3><span>${esc(g.sub)}</span></div>
+      <div class="grid">${rs.map(card).join("")}</div></div>`;
+  }).join("");
+  $("#fgroups").querySelectorAll("[data-f]").forEach(b => b.onclick = () => open(FEAT[+b.dataset.f]));
+  $("#featured").hidden = false;
+}
+function contact() {
+  const c = D.contact || {};
+  return {phone: c.phone || "", email: c.email || "", name: c.name || ""};
+}
+function open(r) {
+  const s = r.spec, c = contact();
+  const kv = [["Model year", r.y], ["Make / model", `${r.mk} ${r.m}`], ["Trim", r.t], ["Mileage", r.mi], ["Engine", engine(r)],
+    ["Drivetrain", r.d], ["Cab", cab(r)], ["Exterior", r.c || "On request"], ["Equipment group", s && s.group],
+    ["History", r.price == null ? "" : r.hist === "clean" ? "No reported accidents or damage on the history report" : "Full history report sent on request"],
+    ["Stock #", r.id]].filter(x => x[1]);
+  const opts = s && s.items.length ? `<div class="optbox"><table class="opt">${s.items.map(([n, p]) => `<tr><td>${esc(n)}</td><td>${p ? "C" + usd(p) : "Incl."}</td></tr>`).join("")}
+      ${s.opt ? `<tr class="tot"><td>Total options</td><td>C${usd(s.opt)}</td></tr>` : ""}
+      ${s.msrp ? `<tr class="tot"><td>Original MSRP</td><td>C${usd(s.msrp)}</td></tr>` : ""}</table></div>`
+    : `<p style="margin:0;color:var(--steel);font-size:13.5px">Factory option list available on request.</p>`;
+  const how = [c.phone && `text or call <b class="mono">${esc(c.phone)}</b>`, c.email && `email <b class="mono">${esc(c.email)}</b>`].filter(Boolean).join(" or ");
+  $("#sheet").innerHTML = `
+    <div class="st-head"><div><div class="k">Vehicle specification</div><h2 id="dlgTitle">${r.y} ${esc(r.mk)} ${esc(r.m)} ${esc(r.t)}</h2></div>
+      <button type="button" class="x" id="close" aria-label="Close">×</button></div>
+    <div class="st-grid">
+      <div class="st-col"><p class="lbl">Vehicle</p><dl class="kv">${kv.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl></div>
+      <div class="st-col"><p class="lbl">Factory options · original window sticker</p>${opts}</div>
+    </div>
+    ${r.price == null
+      ? `<div class="st-price ask"><div><p class="lbl">Delivered price, Texas</p><div class="big">Call for price</div></div>
+      <div class="mkt">Brand-new. Send the stock # and we quote today's delivered price.</div></div>`
+      : `<div class="st-price"><div><p class="lbl">Delivered price, Texas</p><div class="big">${usd(r.price)}</div></div>
+      <div class="mkt"><b style="color:var(--deal)">${pct(r)}% under</b> Texas market<br>${usd(r.tx)} median of ${r.n} comparable stock listings</div></div>`}
+    <div class="st-ask"><p>To check availability, send us stock # <b class="mono">${esc(r.id)}</b>${how ? ": " + how : ""}. We reply with photos, a walk-around video and the history report.</p>
+      <button type="button" class="btn" id="copy">Copy stock #</button></div>`;
+  $("#close").onclick = () => $("#dlg").close();
+  $("#copy").onclick = async () => {
+    try { await navigator.clipboard.writeText(r.id); $("#copy").textContent = "Copied"; } catch { $("#copy").textContent = r.id; }
+  };
+  $("#dlg").showModal();
+}
+function initContact() {
+  const c = contact();
+  const parts = [c.phone && `<span class="mono">${esc(c.phone)}</span>`, c.email && `<span class="mono">${esc(c.email)}</span>`].filter(Boolean);
+  if (parts.length) {
+    $("#utilContact").innerHTML = parts.join(" · ");
+    $("#footContact").innerHTML = (c.name ? esc(c.name) + "<br>" : "") + parts.join("<br>");
+    $("#call").innerHTML = c.phone ? `<span class="btn navy mono" style="letter-spacing:0">${esc(c.phone)}</span>` : "";
+  } else {
+    $("#call").innerHTML = `<a class="btn" href="#how">Dealer inquiries</a>`;
+  }
+}
+$("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg").close(); });
+const years = [...new Set(D.rows.map(r => r.y))].sort((a, b) => a - b);
+$("#fYear").innerHTML = `<option value="0">Any year</option>` + years.map(y => `<option value="${y}">${y} and newer</option>`).join("");
+$("#fYear").onchange = e => { S.year = +e.target.value; render(); };
+$("#fPrice").oninput = e => { S.price = e.target.value; render(); };
+$("#fMiles").oninput = e => { S.miles = e.target.value; render(); };
+$("#fDiesel").onchange = e => { S.diesel = e.target.checked; render(); };
+$("#f4x4").onchange = e => { S.x4 = e.target.checked; render(); };
+$("#fSpec").onchange = e => { S.spec = e.target.checked; render(); };
+$("#q").oninput = e => { S.q = e.target.value.trim(); render(); };
+$("#sort").onchange = e => { S.sort = e.target.value; render(); };
+$("#reset").onclick = () => {
+  Object.assign(S, {cat: "All trucks", diesel: false, x4: false, spec: false, year: 0, price: "", miles: "", q: ""}); S.models.clear();
+  ["#fDiesel", "#f4x4", "#fSpec"].forEach(s => $(s).checked = false); ["#fPrice", "#fMiles", "#q"].forEach(s => $(s).value = ""); $("#fYear").value = "0";
+  render();
+};
+$("#built").textContent = `Updated ${D.built}.`;
+initContact(); featured(); render();
+</script>
+</body>
+</html>
